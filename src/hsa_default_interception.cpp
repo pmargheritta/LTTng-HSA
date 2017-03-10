@@ -1061,4 +1061,3 @@ hsa_status_t hsa_status_string(
     hsa_status_t retval = orig(status, status_string);
     return retval;
 }
-

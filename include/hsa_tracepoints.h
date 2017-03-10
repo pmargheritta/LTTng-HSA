@@ -9,6 +9,10 @@
 
 #include <lttng/tracepoint.h>
 
+#include <GPUPerfAPI-HSA.h>
+
+/* call_stack */
+
 TRACEPOINT_EVENT(
 	hsa_runtime,
 	function_entry,
@@ -31,6 +35,8 @@ TRACEPOINT_EVENT(
 	)
 )
 
+/* runtime_state */
+
 TRACEPOINT_EVENT(
 	hsa_runtime,
 	runtime_initialized,
@@ -40,50 +46,25 @@ TRACEPOINT_EVENT(
 
 TRACEPOINT_EVENT(
 	hsa_runtime,
+	runtime_shut_down,
+	TP_ARGS(),
+	TP_FIELDS()
+)
+
+/* queue_profiling */
+
+TRACEPOINT_EVENT(
+	hsa_runtime,
 	queue_created,
 	TP_ARGS(
 		uint64_t, agent_handle,
-		uint64_t, queue_id
-	),
-	TP_FIELDS(
-		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
-		ctf_integer(uint64_t, queue_id, queue_id)
-	)
-)
-
-TRACEPOINT_EVENT(
-	hsa_runtime,
-	aql_kernel_dispatch_packet_submitted,
-	TP_ARGS(
-		uint64_t, packet_id,
-		uint64_t, agent_handle,
 		uint64_t, queue_id,
-		uint64_t, kernel_id
+		uint64_t, timestamp
 	),
 	TP_FIELDS(
-		ctf_integer(uint64_t, packet_id, packet_id)
 		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
 		ctf_integer(uint64_t, queue_id, queue_id)
-		ctf_integer_hex(uint64_t, kernel_id, kernel_id)
-	)
-)
-
-TRACEPOINT_EVENT(
-	hsa_runtime,
-	kernel_times_gathered,
-	TP_ARGS(
-		uint64_t, kernel_id,
-		uint64_t, agent_handle,
-		uint64_t, queue_id,
-		uint64_t, kernel_start_time,
-		uint64_t, kernel_end_time
-	),
-	TP_FIELDS(
-		ctf_integer_hex(uint64_t, kernel_id, kernel_id)
-		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
-		ctf_integer(uint64_t, queue_id, queue_id)
-		ctf_integer(uint64_t, kernel_start_time, kernel_start_time)
-		ctf_integer(uint64_t, kernel_end_time, kernel_end_time)
+		ctf_integer(uint64_t, timestamp, timestamp)
 	)
 )
 
@@ -91,18 +72,89 @@ TRACEPOINT_EVENT(
 	hsa_runtime,
 	queue_destroyed,
 	TP_ARGS(
-		uint64_t, queue_id
+		uint64_t, queue_id,
+		uint64_t, timestamp
 	),
 	TP_FIELDS(
 		ctf_integer(uint64_t, queue_id, queue_id)
+		ctf_integer(uint64_t, timestamp, timestamp)
+	)
+)
+
+// TRACEPOINT_EVENT(
+// 	hsa_runtime,
+// 	aql_kernel_dispatch_packet_submitted,
+// 	TP_ARGS(
+// 		uint64_t, packet_id,
+// 		uint64_t, agent_handle,
+// 		uint64_t, queue_id,
+// 		uint64_t, kernel_id
+// 	),
+// 	TP_FIELDS(
+// 		ctf_integer(uint64_t, packet_id, packet_id)
+// 		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
+// 		ctf_integer(uint64_t, queue_id, queue_id)
+// 		ctf_integer_hex(uint64_t, kernel_id, kernel_id)
+// 	)
+// )
+
+TRACEPOINT_EVENT(
+	hsa_runtime,
+	kernel_start_nm,
+	TP_ARGS(
+		uint64_t, kernel_object,
+		const char*, kernel_name,
+		uint64_t, agent_handle,
+		uint64_t, queue_id,
+		uint64_t, timestamp
+	),
+	TP_FIELDS(
+		ctf_integer_hex(uint64_t, kernel_object, kernel_object)
+		ctf_string(kernel_name, kernel_name)
+		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
+		ctf_integer(uint64_t, queue_id, queue_id)
+		ctf_integer(uint64_t, timestamp, timestamp)
 	)
 )
 
 TRACEPOINT_EVENT(
 	hsa_runtime,
-	runtime_shut_down,
-	TP_ARGS(),
-	TP_FIELDS()
+	kernel_end_nm,
+	TP_ARGS(
+		uint64_t, kernel_object,
+		const char*, kernel_name,
+		uint64_t, agent_handle,
+		uint64_t, queue_id,
+		uint64_t, timestamp
+	),
+	TP_FIELDS(
+		ctf_integer_hex(uint64_t, kernel_object, kernel_object)
+		ctf_string(kernel_name, kernel_name)
+		ctf_integer_hex(uint64_t, agent_handle, agent_handle)
+		ctf_integer(uint64_t, queue_id, queue_id)
+		ctf_integer(uint64_t, timestamp, timestamp)
+	)
+)
+
+/* perf_counters */
+
+TRACEPOINT_EVENT(
+	hsa_runtime,
+	kernel_perf_counter_nm,
+	TP_ARGS(
+		uint64_t, kernel_object,
+		gpa_uint32, counter_index,
+		const char*, counter_name,
+		double, value,
+		uint64_t, timestamp
+	),
+	TP_FIELDS(
+		ctf_integer_hex(uint64_t, kernel_object, kernel_object)
+		ctf_integer(uint32_t, counter_index, counter_index)
+		ctf_string(counter_name, counter_name)
+		ctf_float(double, value, value)
+		ctf_integer(uint64_t, timestamp, timestamp)
+	)
 )
 
 #endif /* HSA_TRACEPOINTS_H */
