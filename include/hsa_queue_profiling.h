@@ -1,13 +1,11 @@
 #ifndef HSA_QUEUE_PROFILING_H
 #define HSA_QUEUE_PROFILING_H
 
-#include <dlfcn.h>
 #include <map>
-
-#include <hsa.h>
 #include <hsa_ext_profiler.h>
+#include "util.h"
 
-#include "hsa_tracepoints.h"
+uint64_t init_timestamp;
 
 std::map<uint64_t, const char*> symbol_names;
 std::map<uint64_t, uint64_t> kernel_object_symbols;

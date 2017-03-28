@@ -64,7 +64,6 @@ code = '''/*
 */
 
 #include <dlfcn.h>
-
 #include <hsa.h>
 
 {}'''.format(definitions_code)

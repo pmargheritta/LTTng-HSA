@@ -12,8 +12,8 @@ void gather_kernel_times()
         for (int i = 0; i < count; i++) {
             record = records[i];
             name = symbol_names[kernel_object_symbols[record.kernel]];
-            tracepoint(hsa_runtime, kernel_start_nm, record.kernel, name, record.agent.handle, record.queue->id, record.time.start);
-            tracepoint(hsa_runtime, kernel_end_nm, record.kernel, name, record.agent.handle, record.queue->id, record.time.end);
+            tracepoint(hsa_runtime, kernel_start_nm, record.kernel, name, record.agent.handle, record.queue->id, record.time.start - init_timestamp);
+            tracepoint(hsa_runtime, kernel_end_nm, record.kernel, name, record.agent.handle, record.queue->id, record.time.end - init_timestamp);
         }
 
         delete[] records;
@@ -24,15 +24,23 @@ hsa_status_t aql_callback(const hsa_aql_trace_t *aql_trace, void *user_arg)
 {
     switch (aql_trace->type) {
         case HSA_PACKET_TYPE_KERNEL_DISPATCH:
-            /*tracepoint(hsa_runtime, aql_kernel_dispatch_packet_submitted,
+            tracepoint(hsa_runtime, aql_kernel_dispatch_packet_submitted,
   	             aql_trace->packet_id, aql_trace->agent.handle, aql_trace->queue->id,
-                 ((hsa_kernel_dispatch_packet_t*) aql_trace->packet)->kernel_object);*/
+                 ((hsa_kernel_dispatch_packet_t*) aql_trace->packet)->kernel_object);
             break;
         default:
             break;
     }
 
     return HSA_STATUS_SUCCESS;
+}
+
+hsa_status_t hsa_init()
+{
+    decltype(hsa_init) *orig = (decltype(hsa_init)*) dlsym(RTLD_NEXT, "hsa_init");
+    hsa_status_t retval = orig();
+    init_timestamp = mc_timestamp();
+    return retval;
 }
 
 hsa_status_t hsa_queue_create(hsa_agent_t agent, uint32_t size, hsa_queue_type_t type,
@@ -42,12 +50,12 @@ hsa_status_t hsa_queue_create(hsa_agent_t agent, uint32_t size, hsa_queue_type_t
     uint32_t group_segment_size, hsa_queue_t **queue)
 {
     decltype(hsa_ext_tools_queue_create_profiled) *orig = hsa_ext_tools_queue_create_profiled;
-
     hsa_status_t retval = orig(agent, size, type, callback, data, private_segment_size, group_segment_size, queue);
 
-    uint64_t timestamp;
-    hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP, &timestamp);
-    tracepoint(hsa_runtime, queue_created, agent.handle, (*queue)->id, timestamp);
+    tracepoint(hsa_runtime, queue_created, agent.handle, (*queue)->id, mc_timestamp() - init_timestamp);
+
+    // FIXME
+    hsa_ext_tools_register_aql_trace_callback(*queue, NULL, aql_callback);
 
     return retval;
 }
@@ -88,9 +96,7 @@ hsa_status_t hsa_queue_destroy(hsa_queue_t *queue)
     uint64_t queue_id = queue->id;
     hsa_status_t retval = orig(queue);
 
-    uint64_t timestamp;
-    hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP, &timestamp);
-    tracepoint(hsa_runtime, queue_destroyed, queue_id, timestamp);
+    tracepoint(hsa_runtime, queue_destroyed, queue_id, mc_timestamp() - init_timestamp);
 
     return retval;
 }

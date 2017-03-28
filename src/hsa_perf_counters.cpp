@@ -2,37 +2,35 @@
 
 void pre_dispatch_callback(const hsa_dispatch_callback_t* dispatch_params, void* user_args)
 {
-    // Close the context opened for the previous kernel
-    // These operations do not work when performed in the post-dispatch callback
-    read_gpa_counters(*session_id);
-    GPA_CloseContext();
+    pthread_mutex_lock(&mutex);
 
-    if (dispatch_params) {
-        GPA_HSA_Context *context;
-        context->m_pAgent = &(dispatch_params->agent);
-        context->m_pQueue = dispatch_params->queue;
-        context->m_pAqlTranslationHandle = dispatch_params->aql_translation_handle;
-        GPA_OpenContext(context);
+    if (session_id > 0)
+        close_context(session_id);
 
-        gpa_uint32 numCounters, passCount;
-        GPA_GetNumCounters(&numCounters);
+    GPA_HSA_Context *context;
+    context->m_pAgent = &(dispatch_params->agent);
+    context->m_pQueue = dispatch_params->queue;
+    context->m_pAqlTranslationHandle = dispatch_params->aql_translation_handle;
+    GPA_OpenContext(context);
 
-        // Enable counters that require only one pass
-        // TODO allow more passes
-        for (int counter = 0; counter < numCounters; counter++) {
-            GPA_EnableCounter(counter);
-            GPA_GetPassCount(&passCount);
-            if (passCount > 1)
-                GPA_DisableCounter(counter);
-        }
+    gpa_uint32 numCounters, passCount;
+    GPA_GetNumCounters(&numCounters);
 
-        GPA_BeginSession(session_id);
-        session_kernel_objects[*session_id] = dispatch_params->aql_packet->kernel_object;
-
-        // Sample the enabled counters
-        GPA_BeginPass();
-        GPA_BeginSample(0);
+    // Enable counters that require only one pass
+    // TODO allow more passes
+    for (int counter = 0; counter < numCounters; counter++) {
+        GPA_EnableCounter(counter);
+        GPA_GetPassCount(&passCount);
+        if (passCount > 1)
+            GPA_DisableCounter(counter);
     }
+
+    GPA_BeginSession(&session_id);
+    session_kernel_objects[session_id] = dispatch_params->aql_packet->kernel_object;
+
+    // Sample the enabled counters
+    GPA_BeginPass();
+    GPA_BeginSample(0);
 }
 
 void post_dispatch_callback(const hsa_dispatch_callback_t* dispatch_params, void* user_args)
@@ -40,9 +38,20 @@ void post_dispatch_callback(const hsa_dispatch_callback_t* dispatch_params, void
     GPA_EndSample();
     GPA_EndPass();
     GPA_EndSession();
+
+    pthread_mutex_unlock(&mutex);
 }
 
-void read_gpa_counters(gpa_uint32 session_id) {
+void close_context(gpa_uint32 session_id)
+{
+    // Close the context opened for the previous kernel
+    // These operations do not work when performed in the post-dispatch callback
+    read_gpa_counters(session_id);
+    GPA_CloseContext();
+}
+
+void read_gpa_counters(gpa_uint32 session_id)
+{
     bool session_ready;
     GPA_IsSessionReady(&session_ready, session_id);
 
@@ -72,22 +81,22 @@ void read_gpa_counters(gpa_uint32 session_id) {
                     if (type == GPA_TYPE_UINT32) {
                         gpa_uint32 value;
                         GPA_GetSampleUInt32(session_id, sample, enabled_counter_index, &value);
-                        tracepoint(hsa_runtime, kernel_perf_counter_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
+                        tracepoint(hsa_runtime, kernel_perf_counter_uint32_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
                     }
                     else if (type == GPA_TYPE_UINT64) {
                         gpa_uint64 value;
                         GPA_GetSampleUInt64(session_id, sample, enabled_counter_index, &value);
-                        tracepoint(hsa_runtime, kernel_perf_counter_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
+                        tracepoint(hsa_runtime, kernel_perf_counter_uint64_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
                     }
                     else if (type == GPA_TYPE_FLOAT32) {
                         gpa_float32 value;
                         GPA_GetSampleFloat32(session_id, sample, enabled_counter_index, &value);
-                        tracepoint(hsa_runtime, kernel_perf_counter_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
+                        tracepoint(hsa_runtime, kernel_perf_counter_float32_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
                     }
                     else if (type == GPA_TYPE_FLOAT64) {
                         gpa_float64 value;
                         GPA_GetSampleFloat64(session_id, sample, enabled_counter_index, &value);
-                        tracepoint(hsa_runtime, kernel_perf_counter_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
+                        tracepoint(hsa_runtime, kernel_perf_counter_float64_nm, session_kernel_objects[session_id], enabled_counter_index, counter_name, value, timestamp);
                     }
                     else
                         assert(false);
@@ -97,9 +106,19 @@ void read_gpa_counters(gpa_uint32 session_id) {
     }
 }
 
+void gpa_logging_callback(GPA_Logging_Type logging_type, const char* message)
+{
+    std::cout << "[GPA log] " << message << std::endl;
+}
+
 hsa_status_t hsa_init()
 {
     decltype(hsa_init) *orig = (decltype(hsa_init)*) dlsym(RTLD_NEXT, "hsa_init");
+
+    GPA_RegisterLoggingCallback(GPA_LOGGING_ALL, gpa_logging_callback);
+    pthread_mutex_init(&mutex, nullptr);
+    session_id = 0;
+
     hsa_status_t retval = orig();
     return retval;
 }
@@ -113,20 +132,21 @@ hsa_status_t hsa_queue_create(hsa_agent_t agent, uint32_t size, hsa_queue_type_t
     decltype(hsa_queue_create) *orig = (decltype(hsa_queue_create)*) dlsym(RTLD_NEXT, "hsa_queue_create");
     hsa_status_t retval = orig(agent, size, type, callback, data, private_segment_size, group_segment_size, queue);
 
-    session_id = new gpa_uint32;
-    // TODO only one queue at a time
     hsa_ext_tools_set_callback_functions(*queue, pre_dispatch_callback, post_dispatch_callback);
 
     return retval;
 }
 
-hsa_status_t hsa_queue_destroy(hsa_queue_t *queue)
+hsa_status_t hsa_shut_down()
 {
-    decltype(hsa_queue_destroy) *orig = (decltype(hsa_queue_destroy)*) dlsym(RTLD_NEXT, "hsa_queue_destroy");
+    decltype(hsa_shut_down) *orig = (decltype(hsa_shut_down)*) dlsym(RTLD_NEXT, "hsa_shut_down");
 
-    pre_dispatch_callback(NULL, NULL); // Close the last context
-    delete session_id;
+    pthread_mutex_lock(&mutex);
+    close_context(session_id);
+    pthread_mutex_unlock(&mutex);
 
-    hsa_status_t retval = orig(queue);
+    pthread_mutex_destroy(&mutex);
+
+    hsa_status_t retval = orig();
     return retval;
 }
