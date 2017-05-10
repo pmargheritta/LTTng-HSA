@@ -1,7 +1,7 @@
 INCLUDES = -Iinclude/ -I/opt/rocm/hsa/include/ -I/home/paul/Source/rocm/GPA/GPA/Src/GPUPerfAPI-Common
 LIBDIRS = -L/opt/rocm/hsa/lib/ -L/home/paul/Source/rocm/GPA/GPA/Src/GPUPerfAPIHSA
 LIBS = -ldl -lpthread -llttng-ust -lhsa-runtime-tools64 -lGPUPerfAPIHSA
-MODULES = call_stack queue_profiling perf_counters
+MODULES = call_stack kernel_times queue_profiling perf_counters
 
 all: tracepoints util $(MODULES)
 
