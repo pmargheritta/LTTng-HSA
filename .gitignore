@@ -1,0 +1,6 @@
+legacy/
+lib/
+obj/
+tests/
+__pycache__/
+*.py[cod]
