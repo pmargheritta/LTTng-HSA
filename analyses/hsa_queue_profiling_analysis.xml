@@ -7,7 +7,7 @@
 			<traceType id="org.eclipse.linuxtools.tmf.ui.type.ctf" />
 			<label value="HSA queue profiling" />
 		</head>
-	
+
 		<definedValue name="WAITING" value="waiting" />
 		<definedValue name="RUNNING" value="running" />
 		<definedValue name="DONE" value="done" />
@@ -20,7 +20,7 @@
 		<location id="current_kernel">
 			<stateAttribute type="location" value="current_queue" />
 			<stateAttribute type="constant" value="kernels" />
-			<stateAttribute type="eventField" value="kernel_id" />
+			<stateAttribute type="eventField" value="kernel_name" />
 		</location>
 
 		<patternHandler initial="kernels">
