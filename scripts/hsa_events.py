@@ -24,6 +24,9 @@ def event_classes_factory():
 
 event_classes = defaultdict(event_classes_factory)
 
+event_classes['runtime_initialized'] = btw.EventClass('hsa_runtime:runtime_initialized')
+event_classes['runtime_shut_down'] = btw.EventClass('hsa_runtime:runtime_shut_down')
+
 event_classes['function_entry'] = btw.EventClass('hsa_runtime:function_entry')
 event_classes['function_entry'].add_field(string_fd, 'name')
 
@@ -44,14 +47,28 @@ event_classes['aql_kernel_dispatch_packet_submitted'].add_field(uint64_fd, 'queu
 event_classes['aql_kernel_dispatch_packet_submitted'].add_field(huint64_fd, 'kernel_object')
 event_classes['aql_kernel_dispatch_packet_submitted'].add_field(string_fd, 'kernel_name')
 
-event_classes['kernel_start_nm'] = btw.EventClass('hsa_runtime:kernel_start')
+event_classes['kernel_start_nm'] = btw.EventClass('hsa_runtime:kernel_start_nm')
 event_classes['kernel_start_nm'].add_field(huint64_fd, 'kernel_object')
 event_classes['kernel_start_nm'].add_field(string_fd, 'kernel_name')
 event_classes['kernel_start_nm'].add_field(huint64_fd, 'agent_handle')
 event_classes['kernel_start_nm'].add_field(uint64_fd, 'queue_id')
+event_classes['kernel_start_nm'].add_field(uint64_fd, 'timestamp')
 
-event_classes['kernel_end_nm'] = btw.EventClass('hsa_runtime:kernel_end')
+event_classes['kernel_end_nm'] = btw.EventClass('hsa_runtime:kernel_end_nm')
 event_classes['kernel_end_nm'].add_field(huint64_fd, 'kernel_object')
 event_classes['kernel_end_nm'].add_field(string_fd, 'kernel_name')
 event_classes['kernel_end_nm'].add_field(huint64_fd, 'agent_handle')
 event_classes['kernel_end_nm'].add_field(uint64_fd, 'queue_id')
+event_classes['kernel_end_nm'].add_field(uint64_fd, 'timestamp')
+
+event_classes['kernel_start'] = btw.EventClass('hsa_runtime:kernel_start')
+event_classes['kernel_start'].add_field(huint64_fd, 'kernel_object')
+event_classes['kernel_start'].add_field(string_fd, 'kernel_name')
+event_classes['kernel_start'].add_field(huint64_fd, 'agent_handle')
+event_classes['kernel_start'].add_field(uint64_fd, 'queue_id')
+
+event_classes['kernel_end'] = btw.EventClass('hsa_runtime:kernel_end')
+event_classes['kernel_end'].add_field(huint64_fd, 'kernel_object')
+event_classes['kernel_end'].add_field(string_fd, 'kernel_name')
+event_classes['kernel_end'].add_field(huint64_fd, 'agent_handle')
+event_classes['kernel_end'].add_field(uint64_fd, 'queue_id')

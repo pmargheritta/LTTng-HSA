@@ -42,12 +42,13 @@ for r_event in collection.events:
     event_time = r_event.timestamp
     w_event = btw.Event(event_classes[name])
 
-    if name == 'function_entry':
-        if not init_time and r_event['name'] == 'hsa_init':
-            init_time = event_time
-        w_event.payload('name').value = r_event['name']
+    if name == 'runtime_initialized':
+        init_time = event_time
 
-    elif name == 'function_exit':
+    elif name == 'runtime_shut_down':
+        pass
+
+    elif name == 'function_entry' or name == 'function_exit':
         w_event.payload('name').value = r_event['name']
 
     elif name == 'queue_created':
@@ -55,7 +56,7 @@ for r_event in collection.events:
         w_event.payload('queue_id').value = r_event['queue_id']
 
     elif name == 'queue_destroyed':
-        queue_destroyed_event.payload('queue_id').value = event['queue_id']
+        w_event.payload('queue_id').value = r_event['queue_id']
 
     elif name == 'aql_kernel_dispatch_packet_submitted':
         w_event.payload('packet_id').value = r_event['packet_id']
@@ -65,6 +66,7 @@ for r_event in collection.events:
         w_event.payload('kernel_name').value = r_event['kernel_name']
 
     elif name == 'kernel_start_nm' or name == 'kernel_end_nm':
+        w_event = btw.Event(event_classes[name[:-3]])
         w_event.payload('kernel_object').value = r_event['kernel_object']
         w_event.payload('kernel_name').value = r_event['kernel_name']
         w_event.payload('agent_handle').value = r_event['agent_handle']

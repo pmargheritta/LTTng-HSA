@@ -10,6 +10,20 @@
 #include <lttng/tracepoint.h>
 #include <GPUPerfAPI-HSA.h>
 
+TRACEPOINT_EVENT(
+	hsa_runtime,
+	runtime_initialized,
+	TP_ARGS(),
+	TP_FIELDS()
+)
+
+TRACEPOINT_EVENT(
+	hsa_runtime,
+	runtime_shut_down,
+	TP_ARGS(),
+	TP_FIELDS()
+)
+
 /* call_stack */
 
 TRACEPOINT_EVENT(
@@ -32,22 +46,6 @@ TRACEPOINT_EVENT(
 	TP_FIELDS(
 		ctf_string(name, name)
 	)
-)
-
-/* runtime_state */
-
-TRACEPOINT_EVENT(
-	hsa_runtime,
-	runtime_initialized,
-	TP_ARGS(),
-	TP_FIELDS()
-)
-
-TRACEPOINT_EVENT(
-	hsa_runtime,
-	runtime_shut_down,
-	TP_ARGS(),
-	TP_FIELDS()
 )
 
 /* queue_profiling */

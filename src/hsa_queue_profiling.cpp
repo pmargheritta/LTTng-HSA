@@ -33,9 +33,9 @@ hsa_status_t aql_callback(const hsa_aql_trace_t *aql_trace, void *user_arg)
 
 hsa_status_t hsa_init()
 {
-    tracepoint(hsa_runtime, function_entry, "hsa_init");
     decltype(hsa_init) *orig = (decltype(hsa_init)*) dlsym(RTLD_NEXT, "hsa_init");
     hsa_status_t retval = orig();
+    tracepoint(hsa_runtime, runtime_initialized);
     return retval;
 }
 
@@ -43,7 +43,7 @@ hsa_status_t hsa_shut_down()
 {
     decltype(hsa_shut_down) *orig = (decltype(hsa_shut_down)*) dlsym(RTLD_NEXT, "hsa_shut_down");
     hsa_status_t retval = orig();
-    tracepoint(hsa_runtime, function_exit, "hsa_shut_down");
+    tracepoint(hsa_runtime, runtime_shut_down);
     return retval;
 }
 

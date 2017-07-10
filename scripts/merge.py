@@ -40,7 +40,10 @@ for r_event in collection.events:
     name = r_event.name.split(':')[-1]
     w_event = btw.Event(event_classes[name])
 
-    if name == 'function_entry' or name == 'function_exit':
+    if name == 'runtime_initialized' or name == 'runtime_shut_down':
+        pass
+
+    elif name == 'function_entry' or name == 'function_exit':
         w_event.payload('name').value = r_event['name']
 
     elif name == 'queue_created':
