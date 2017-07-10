@@ -11,10 +11,9 @@ if len(sys.argv) < 4:
 
 # Add the input traces to the collection
 trace_path = '/ust/uid/1000/64-bit/'
-in_path_1, in_path_2 = sys.argv[1] + trace_path, sys.argv[2] + trace_path
 collection = btr.TraceCollection()
-collection.add_trace(in_path_1, 'ctf')
-collection.add_trace(in_path_2, 'ctf')
+collection.add_trace(sys.argv[1] + trace_path, 'ctf')
+collection.add_trace(sys.argv[2] + trace_path, 'ctf')
 print('Read input traces at {} and {}.'.format(sys.argv[1], sys.argv[2]))
 
 # Set the output trace
