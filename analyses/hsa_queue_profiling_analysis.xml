@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+
+	<pattern version="0" id="hsaqp_pattern">
+		<head>
+			<traceType id="org.eclipse.linuxtools.tmf.ui.type.ctf" />
+			<label value="HSA queue profiling" />
+		</head>
+	
+		<definedValue name="WAITING" value="waiting" />
+		<definedValue name="RUNNING" value="running" />
+		<definedValue name="DONE" value="done" />
+
+		<location id="current_queue">
+			<stateAttribute type="constant" value="queues" />
+			<stateAttribute type="eventField" value="queue_id" />
+		</location>
+
+		<location id="current_kernel">
+			<stateAttribute type="location" value="current_queue" />
+			<stateAttribute type="constant" value="kernels" />
+			<stateAttribute type="eventField" value="kernel_id" />
+		</location>
+
+		<patternHandler initial="kernels">
+
+			<action id="queue_created">
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$WAITING" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="agent_handle" />
+					<stateValue type="eventField" value="agent_handle" />
+				</stateChange>
+			</action>
+
+			<action id="dispatch_packet_submitted">
+				<stateChange>
+					<stateAttribute type="location" value="current_kernel" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$WAITING" />
+				</stateChange>
+			</action>
+
+			<action id="kernel_start">
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$RUNNING" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="location" value="current_kernel" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$RUNNING" />
+				</stateChange>
+			</action>
+
+			<action id="kernel_end">
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$WAITING" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="location" value="current_kernel" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="string" value="$DONE" />
+				</stateChange>
+			</action>
+
+			<action id="queue_destroyed">
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="status" />
+					<stateValue type="delete" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="location" value="current_queue" />
+					<stateAttribute type="constant" value="kernels" />
+					<stateValue type="delete" />
+				</stateChange>
+			</action>
+
+			<fsm id="kernels" multiple="false" initial="loop">
+				<state id="loop">
+					<transition event="hsa_runtime:queue_created" target="loop" action="queue_created" />
+					<transition event="hsa_runtime:aql_kernel_dispatch_packet_submitted" target="loop" action="dispatch_packet_submitted" />
+					<transition event="hsa_runtime:kernel_start" target="loop" action="kernel_start" />
+					<transition event="hsa_runtime:kernel_end" target="loop" action="kernel_end" />
+					<transition event="hsa_runtime:queue_destroyed" target="loop" action="queue_destroyed" />
+				</state>
+			</fsm>
+
+		</patternHandler>
+	</pattern>
+
+	<timeGraphView id="hsaqp_view">
+		<head>
+			<analysis id="hsaqp_pattern" />
+			<label value="HSA queue profiling" />
+		</head>
+
+		<entry path="queues/*">
+			<display type="constant" value="status" />
+		</entry>
+		<entry path="queues/*/kernels/*">
+			<display type="constant" value="status" />
+		</entry>
+	</timeGraphView>
+</tmfxml>

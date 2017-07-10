@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<!-- ***************************************************************************
+* Copyright (c) 2016 Ericsson
+*
+* All rights reserved. This program and the accompanying materials are
+* made available under the terms of the Eclipse Public License v1.0 which
+* accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v10.html
+*************************************************************************** -->
+	<pattern version="0" id="HSA call stack view">
+		<head>
+			<traceType id="org.eclipse.linuxtools.lttng2.ust.tracetype" />
+			<label value="HSA call stack view" />
+		</head>
+	
+	<!-- 	The attribute initial specifies the FSMs that will be instanciated at the beginning of the analysis -->
+		<patternHandler initial="call_stack">
+
+	<!-- 	CONDITIONS -->
+
+			<action id="func_entry">
+	<!-- 		Save the name of the function called under the current scenario path -->
+				<stateChange>
+					<stateAttribute type="constant" value="Callstack" />
+					<stateAttribute type="eventField" value="context._vtid" />
+					<stateValue type="eventField" value="name" stack="push" />
+				</stateChange>
+			</action>
+
+			<action id="func_exit">
+	<!-- 		Save the name of the function called under the current scenario path -->
+				<stateChange>
+					<stateAttribute type="constant" value="Callstack" />
+					<stateAttribute type="eventField" value="context._vtid" />
+					<stateValue type="eventField" value="name" stack="pop" />
+				</stateChange>
+			</action>
+
+
+	<!-- 		FSMs -->
+
+
+			<fsm id="call_stack" multiple="false" initial="loop">
+				<state id="loop">
+	<!-- 				The state will stay here until we have a function entry event -->
+					<transition event="hsa_runtime:function_entry" target="loop" action="func_entry" />
+					<transition event="hsa_runtime:function_exit" target="loop" action="func_exit" />
+				</state>
+			</fsm>
+
+		</patternHandler>
+	</pattern>
+
+	<timeGraphView id="hsa.callstack">
+		<head>
+			<analysis id="HSA call stack view" />
+			<label value="HSA call stack view" />
+		</head>
+
+		<!-- Scenario view -->
+		<entry path="Callstack/*">
+			<display type="self" />
+			<entry path="*">
+				<display type="self" />
+			</entry>
+		</entry>
+	</timeGraphView>
+</tmfxml>
