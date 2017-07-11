@@ -2,15 +2,15 @@
 <tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
 
-	<pattern version="0" id="hsaqp_pattern">
+	<pattern version="0" id="hsa_qp_pattern">
 		<head>
 			<traceType id="org.eclipse.linuxtools.tmf.ui.type.ctf" />
-			<label value="HSA queue profiling" />
+			<label value="HSA queue profiling view" />
 		</head>
 
-		<definedValue name="WAITING" value="waiting" />
-		<definedValue name="RUNNING" value="running" />
-		<definedValue name="DONE" value="done" />
+		<definedValue name="WAITING" value="WAITING" />
+		<definedValue name="RUNNING" value="RUNNING" />
+		<definedValue name="DONE" value="DONE" />
 
 		<location id="current_queue">
 			<stateAttribute type="constant" value="queues" />
@@ -98,10 +98,10 @@
 		</patternHandler>
 	</pattern>
 
-	<timeGraphView id="hsaqp_view">
+	<timeGraphView id="hsa_qp_view">
 		<head>
-			<analysis id="hsaqp_pattern" />
-			<label value="HSA queue profiling" />
+			<analysis id="hsa_qp_pattern" />
+			<label value="HSA queue profiling view" />
 		</head>
 
 		<entry path="queues/*">
