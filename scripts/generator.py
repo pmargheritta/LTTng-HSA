@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# HSA Interception -- Source file generator
-
 import re
 
 f = open('/home/paul/Source/rocm/ROCR-Runtime/src/core/inc/hsa_internal.h')

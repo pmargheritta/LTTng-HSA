@@ -6,7 +6,7 @@ import sys
 from hsa_events import event_classes
 
 if len(sys.argv) < 3:
-    print('Syntax: ./hsaqp_event_integration.py INPUT_TRACE OUTPUT_TRACE')
+    print('Usage: ./sort.py INPUT_TRACE OUTPUT_TRACE')
     sys.exit()
 
 # Add the input trace to the collection
