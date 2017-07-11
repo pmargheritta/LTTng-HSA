@@ -20,7 +20,7 @@
 		<location id="current_kernel">
 			<stateAttribute type="location" value="current_queue" />
 			<stateAttribute type="constant" value="kernels" />
-			<stateAttribute type="eventField" value="kernel_name" />
+			<stateAttribute type="eventField" value="kernel_object" />
 		</location>
 
 		<patternHandler initial="kernels">
